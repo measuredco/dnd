@@ -103,8 +103,15 @@ export default ({
       draggable,
       viewport,
     });
+
+    // Offset viewport when moving along axis (such as for using keyboard sensor with iframes)
+    const offsetClientSelection = subtract(clientSelection, {
+      x: viewport.offset.x,
+      y: viewport.offset.y,
+    });
+
     return {
-      clientSelection,
+      clientSelection: offsetClientSelection,
       impact,
       scrollJumpRequest: null,
     };

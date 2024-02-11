@@ -6,6 +6,8 @@ import type {
   Placeholder,
 } from '../../types';
 import { origin } from '../../state/position';
+import getIframeOffset from '../iframe/get-iframe-offset';
+import applyOffset from '../iframe/apply-offset';
 
 export default function getDimension(
   descriptor: DraggableDescriptor,
@@ -13,9 +15,20 @@ export default function getDimension(
   windowScroll: Position = origin,
 ): DraggableDimension {
   const computedStyles: CSSStyleDeclaration = window.getComputedStyle(el);
-  const borderBox: ClientRect = el.getBoundingClientRect();
-  const client: BoxModel = calculateBox(borderBox, computedStyles);
-  const page: BoxModel = withScroll(client, windowScroll);
+
+  const offset = getIframeOffset(el);
+
+  const client: BoxModel = calculateBox(
+    el.getBoundingClientRect(),
+    computedStyles,
+  );
+  const page: BoxModel = withScroll(
+    calculateBox(
+      applyOffset(el.getBoundingClientRect(), offset),
+      computedStyles,
+    ),
+    windowScroll,
+  );
 
   const placeholder: Placeholder = {
     client,

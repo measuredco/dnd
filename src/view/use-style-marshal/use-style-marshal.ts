@@ -1,4 +1,3 @@
-import { useRef, MutableRefObject } from 'react';
 import memoizeOne from 'memoize-one';
 import { useMemo, useCallback } from 'use-memo-one';
 import { invariant } from '../../invariant';
@@ -8,10 +7,11 @@ import getStyles from './get-styles';
 import type { Styles } from './get-styles';
 import { prefix } from '../data-attributes';
 import useLayoutEffect from '../use-isomorphic-layout-effect';
+import { querySelectorAll } from '../../query-selector-all';
+import querySelectorAllIframe from '../iframe/query-selector-all-iframe';
 
-const getHead = (): HTMLHeadElement => {
-  const head: HTMLHeadElement | null = document.querySelector('head');
-  invariant(head, 'Cannot find the head to append a style to');
+const getHead = (doc: Document): HTMLHeadElement | null => {
+  const head: HTMLHeadElement | null = doc.querySelector('head');
   return head;
 };
 
@@ -24,64 +24,97 @@ const createStyleEl = (nonce?: string): HTMLStyleElement => {
   return el;
 };
 
+const alwaysDataAttr = `${prefix}-always`;
+const dynamicDataAttr = `${prefix}-dynamic`;
+
 export default function useStyleMarshal(contextId: ContextId, nonce?: string) {
   const styles: Styles = useMemo(() => getStyles(contextId), [contextId]);
-  const alwaysRef = useRef<HTMLStyleElement | null>(null);
-  const dynamicRef = useRef<HTMLStyleElement | null>(null);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const setDynamicStyle = useCallback(
     // Using memoizeOne to prevent frequent updates to textContext
     memoizeOne((proposed: string) => {
-      const el: HTMLStyleElement | null = dynamicRef.current;
-      invariant(el, 'Cannot set dynamic style element if it is not set');
-      el.textContent = proposed;
+      const selector = `[${dynamicDataAttr}="${contextId}"]`;
+
+      querySelectorAllIframe(selector).forEach((el) => {
+        invariant(el, 'Cannot set dynamic style element if it is not set');
+        el.textContent = proposed;
+      });
     }),
-    [],
+    [contextId],
   );
 
-  const setAlwaysStyle = useCallback((proposed: string) => {
-    const el: HTMLStyleElement | null = alwaysRef.current;
-    invariant(el, 'Cannot set dynamic style element if it is not set');
-    el.textContent = proposed;
-  }, []);
+  const setAlwaysStyle = useCallback(
+    (proposed: string) => {
+      const selector = `[${alwaysDataAttr}="${contextId}"]`;
+
+      querySelectorAllIframe(selector).forEach((el) => {
+        invariant(el, 'Cannot set dynamic style element if it is not set');
+        el.textContent = proposed;
+      });
+    },
+    [contextId],
+  );
 
   // using layout effect as programatic dragging might start straight away (such as for cypress)
   useLayoutEffect(() => {
-    invariant(
-      !alwaysRef.current && !dynamicRef.current,
-      'style elements already mounted',
-    );
+    const alwaysSelector = `[${alwaysDataAttr}="${contextId}"]`;
+    const dynamicSelector = `[${dynamicDataAttr}="${contextId}"]`;
 
-    const always: HTMLStyleElement = createStyleEl(nonce);
-    const dynamic: HTMLStyleElement = createStyleEl(nonce);
+    const heads = [
+      getHead(document),
+      ...(
+        querySelectorAll(document, `[${prefix}-iframe]`) as HTMLIFrameElement[]
+      ).map((iframe) => getHead(iframe.contentWindow!.document)),
+    ];
 
-    // store their refs
-    alwaysRef.current = always;
-    dynamicRef.current = dynamic;
+    // Create initial style elements
+    heads.forEach((head) => {
+      if (!head) return;
 
-    // for easy identification
-    always.setAttribute(`${prefix}-always`, contextId);
-    dynamic.setAttribute(`${prefix}-dynamic`, contextId);
+      const alwaysElements = querySelectorAll(
+        head.ownerDocument,
+        alwaysSelector,
+      );
+      const dynamicElements = querySelectorAll(
+        head.ownerDocument,
+        dynamicSelector,
+      );
 
-    // add style tags to head
-    getHead().appendChild(always);
-    getHead().appendChild(dynamic);
+      if (
+        alwaysElements.length >= heads.length ||
+        dynamicElements.length >= heads.length
+      ) {
+        return;
+      }
 
-    // set initial style
-    setAlwaysStyle(styles.always);
-    setDynamicStyle(styles.resting);
+      const always: HTMLStyleElement = createStyleEl(nonce);
+      const dynamic: HTMLStyleElement = createStyleEl(nonce);
+
+      // for easy identification
+      always.setAttribute(alwaysDataAttr, contextId);
+      dynamic.setAttribute(dynamicDataAttr, contextId);
+
+      head.appendChild(always);
+      head.appendChild(dynamic);
+
+      // set initial style
+      setAlwaysStyle(styles.always);
+      setDynamicStyle(styles.resting);
+    });
 
     return () => {
-      const remove = (ref: MutableRefObject<HTMLStyleElement | null>) => {
-        const current: HTMLStyleElement | null = ref.current;
-        invariant(current, 'Cannot unmount ref as it is not set');
-        getHead().removeChild(current);
-        ref.current = null;
+      const remove = (selector: string) => {
+        const elements = querySelectorAllIframe(selector);
+
+        elements.forEach((el) => {
+          invariant(el, 'Cannot unmount element as it is not set');
+          el.ownerDocument.head.removeChild(el);
+        });
       };
 
-      remove(alwaysRef);
-      remove(dynamicRef);
+      remove(alwaysSelector);
+      remove(dynamicSelector);
     };
   }, [
     nonce,
@@ -107,10 +140,6 @@ export default function useStyleMarshal(contextId: ContextId, nonce?: string) {
     [setDynamicStyle, styles.dropAnimating, styles.userCancel],
   );
   const resting = useCallback(() => {
-    // Can be called defensively
-    if (!dynamicRef.current) {
-      return;
-    }
     setDynamicStyle(styles.resting);
   }, [setDynamicStyle, styles.resting]);
 

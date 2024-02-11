@@ -18,6 +18,7 @@ import * as keyCodes from '../../key-codes';
 import supportedPageVisibilityEventName from './util/supported-page-visibility-event-name';
 import { noop } from '../../../empty';
 import useLayoutEffect from '../../use-isomorphic-layout-effect';
+import offsetPoint from './util/offset-point';
 
 type TouchWithForce = Touch & {
   force: number;
@@ -134,10 +135,11 @@ function getHandleBindings({
 
         const { clientX, clientY } = event.touches[0];
 
-        const point: Position = {
-          x: clientX,
-          y: clientY,
-        };
+        const point = offsetPoint(
+          clientX,
+          clientY,
+          event.currentTarget as Window,
+        );
 
         // We need to prevent the default event in order to block native scrolling
         // Also because we are using it as part of a drag we prevent the default action
@@ -289,10 +291,12 @@ export default function useTouchSensor(api: SensorAPI) {
 
         const touch: Touch = event.touches[0];
         const { clientX, clientY } = touch;
-        const point: Position = {
-          x: clientX,
-          y: clientY,
-        };
+
+        const point = offsetPoint(
+          clientX,
+          clientY,
+          event.currentTarget as Window,
+        );
 
         // unbind this event handler
         unbindEventsRef.current();

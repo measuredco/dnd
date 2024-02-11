@@ -1,3 +1,5 @@
+import { IframeHTMLAttributes } from 'react';
+import { querySelectorAll } from '../../query-selector-all';
 import type {
   AnyEventBinding,
   EventBinding,
@@ -21,15 +23,26 @@ export default function bindEvents(
   bindings: AnyEventBinding[],
   sharedOptions?: EventOptions,
 ): () => void {
-  const unbindings: UnbindFn[] = (bindings as EventBinding[]).map(
-    (binding): UnbindFn => {
-      const options = getOptions(sharedOptions, binding.options);
+  const unbindings: UnbindFn[] = (bindings as EventBinding[]).flatMap(
+    (binding): UnbindFn[] => {
+      const iframes: HTMLIFrameElement[] = querySelectorAll(
+        window.document,
+        'iframe',
+      ) as HTMLIFrameElement[];
 
-      el.addEventListener(binding.eventName, binding.fn, options);
+      const windows = [el, ...iframes.map((iframe) => iframe.contentWindow)];
 
-      return function unbind() {
-        el.removeEventListener(binding.eventName, binding.fn, options);
-      };
+      return windows.map((win) => {
+        if (!win) return function unbind() {};
+
+        const options = getOptions(sharedOptions, binding.options);
+
+        win.addEventListener(binding.eventName, binding.fn, options);
+
+        return function unbind() {
+          win.removeEventListener(binding.eventName, binding.fn, options);
+        };
+      });
     },
   );
 

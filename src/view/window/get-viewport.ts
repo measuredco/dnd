@@ -1,12 +1,16 @@
 import { getRect } from 'css-box-model';
 import type { Rect, Position } from 'css-box-model';
-import type { Viewport } from '../../types';
+import type { Critical, Viewport } from '../../types';
 import { origin } from '../../state/position';
 import getWindowScroll from './get-window-scroll';
 import getMaxWindowScroll from './get-max-window-scroll';
 import getDocumentElement from '../get-document-element';
+import getIframeOffset from '../iframe/get-iframe-offset';
+import querySelectorAllIframe from '../iframe/query-selector-all-iframe';
+import { prefix } from '../data-attributes';
+import applyOffset from '../iframe/apply-offset';
 
-export default (): Viewport => {
+export default (critical?: Critical): Viewport => {
   const scroll: Position = getWindowScroll();
   const maxScroll: Position = getMaxWindowScroll();
 
@@ -32,6 +36,13 @@ export default (): Viewport => {
     bottom,
   });
 
+  const droppables = querySelectorAllIframe(
+    `[${prefix}-droppable-id="${critical?.droppable.id}"]`,
+  );
+
+  const offset = getIframeOffset(droppables[0]);
+  const offsetFrame = applyOffset(frame, offset);
+
   const viewport: Viewport = {
     frame,
     scroll: {
@@ -43,6 +54,7 @@ export default (): Viewport => {
         displacement: origin,
       },
     },
+    offset: offsetFrame,
   };
 
   return viewport;

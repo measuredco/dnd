@@ -16,6 +16,7 @@ import getDraggablesInsideDroppable from '../../get-draggables-inside-droppable'
 import getClientFromPageBorderBoxCenter from '../../get-center-from-impact/get-client-border-box-center/get-client-from-page-border-box-center';
 import getPageBorderBoxCenter from '../../get-center-from-impact/get-page-border-box-center';
 import moveToNewDroppable from './move-to-new-droppable';
+import { subtract } from '../../position';
 
 interface Args {
   isMovingForward: boolean;
@@ -100,8 +101,14 @@ export default ({
     viewport,
   });
 
+  // Offset viewport when moving along axis (such as for using keyboard sensor with iframes)
+  const offsetClientSelection = subtract(clientSelection, {
+    x: viewport.offset.x,
+    y: viewport.offset.y,
+  });
+
   return {
-    clientSelection,
+    clientSelection: offsetClientSelection,
     impact,
     scrollJumpRequest: null,
   };

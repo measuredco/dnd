@@ -10,12 +10,13 @@ import type {
   ScrollSize,
 } from '../../types';
 import getScroll from './get-scroll';
+import getOffsettedBox from '../iframe/get-offsetted-box';
 
 const getClient = (
   targetRef: HTMLElement,
   closestScrollable?: Element | null,
 ): BoxModel => {
-  const base: BoxModel = getBox(targetRef);
+  const base: BoxModel = getOffsettedBox(targetRef);
 
   // Droppable has no scroll parent
   if (!closestScrollable) {
