@@ -44,6 +44,7 @@ const Droppable: FunctionComponent<Props> = (props) => {
     // map props
     snapshot,
     useClone,
+    shouldRenderOriginal = false,
     // dispatch props
     updateViewportMaxScroll,
 
@@ -139,8 +140,9 @@ const Droppable: FunctionComponent<Props> = (props) => {
       droppableId,
       type,
       isUsingCloneFor,
+      shouldRenderOriginal,
     }),
-    [droppableId, isUsingCloneFor, type],
+    [droppableId, isUsingCloneFor, shouldRenderOriginal, type],
   );
 
   function getClone(): ReactNode | null {

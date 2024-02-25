@@ -55,6 +55,7 @@ export interface MapProps {
   // snapshot based on redux state to be provided to consumers
   snapshot: DroppableStateSnapshot;
   useClone: UseClone | null;
+  shouldRenderOriginal?: boolean;
 }
 
 export interface DefaultProps {
@@ -79,6 +80,7 @@ export interface DroppableProps extends Partial<DefaultProps> {
   ) => ReactNode;
   droppableId: DroppableId;
   renderClone?: DraggableChildrenFn | null;
+  shouldRenderOriginal?: boolean;
 }
 
 export type InternalOwnProps = DroppableProps &

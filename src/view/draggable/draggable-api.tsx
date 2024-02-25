@@ -16,7 +16,9 @@ export function PrivateDraggable(props: PrivateOwnProps) {
   // In that case we unmount the existing dragging item
   const isUsingCloneFor: DraggableId | null = droppableContext.isUsingCloneFor;
   if (isUsingCloneFor === props.draggableId && !props.isClone) {
-    return null;
+    if (!droppableContext.shouldRenderOriginal) {
+      return null;
+    }
   }
 
   return <ConnectedDraggable {...props} />;
