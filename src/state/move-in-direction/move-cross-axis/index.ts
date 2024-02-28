@@ -1,4 +1,4 @@
-import type { Position } from 'css-box-model';
+import { type Position } from 'css-box-model';
 import type { PublicResult } from '../move-in-direction-types';
 import type {
   DroppableDimension,
@@ -16,7 +16,6 @@ import getDraggablesInsideDroppable from '../../get-draggables-inside-droppable'
 import getClientFromPageBorderBoxCenter from '../../get-center-from-impact/get-client-border-box-center/get-client-from-page-border-box-center';
 import getPageBorderBoxCenter from '../../get-center-from-impact/get-page-border-box-center';
 import moveToNewDroppable from './move-to-new-droppable';
-import { subtract } from '../../position';
 
 interface Args {
   isMovingForward: boolean;
@@ -101,14 +100,8 @@ export default ({
     viewport,
   });
 
-  // Offset viewport when moving along axis (such as for using keyboard sensor with iframes)
-  const offsetClientSelection = subtract(clientSelection, {
-    x: viewport.offset.x,
-    y: viewport.offset.y,
-  });
-
   return {
-    clientSelection: offsetClientSelection,
+    clientSelection,
     impact,
     scrollJumpRequest: null,
   };
