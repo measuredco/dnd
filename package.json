@@ -1,12 +1,11 @@
 {
-  "name": "@hello-pangea/dnd",
-  "version": "16.5.0",
+  "name": "@measured/dnd",
+  "version": "16.6.0-canary.eda7e8b",
   "private": false,
-  "description": "Beautiful and accessible drag and drop for lists with React",
-  "author": "Alex Reardon <areardon@atlassian.com>",
+  "description": "Beautiful and accessible drag and drop for lists with React, with iframe and CSS transform support",
+  "author": "Measured Corporation Ltd <hello@measured.co>",
   "maintainers": [
-    "Gabriel Santerre <gab@100terres.com>",
-    "Reece Carolan <reece@hellopangea.com>"
+    "Measured Corporation Ltd <hello@measured.co>"
   ],
   "keywords": [
     "drag and drop",
@@ -22,10 +21,10 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/hello-pangea/dnd.git"
+    "url": "https://github.com/measuredco/dnd.git"
   },
   "bugs": {
-    "url": "https://github.com/hello-pangea/dnd/issues"
+    "url": "https://github.com/measuredco/dnd/issues"
   },
   "main": "dist/dnd.cjs.js",
   "module": "dist/dnd.esm.js",
