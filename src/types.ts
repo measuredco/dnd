@@ -1,4 +1,5 @@
 import type { BoxModel, Rect, Position } from 'css-box-model';
+import { Transform } from './view/transform';
 
 export type Id = string;
 export type DraggableId = Id;
@@ -97,6 +98,8 @@ export interface DraggableDimension {
   // how much displacement the draggable causes
   // this is the size of the marginBox
   displaceBy: Position;
+  // Any transforms applied to this draggable
+  transform: Transform | null;
 }
 
 export interface Scrollable {
@@ -150,6 +153,7 @@ export interface DroppableDimension {
   frame: Scrollable | null;
   // what is visible through the frame
   subject: DroppableSubject;
+  transform: Transform | null;
 }
 export interface DraggableLocation {
   droppableId: DroppableId;

@@ -1,5 +1,5 @@
 import { calculateBox, withScroll } from 'css-box-model';
-import type { BoxModel, Position } from 'css-box-model';
+import type { Position } from 'css-box-model';
 import type {
   DraggableDescriptor,
   DraggableDimension,
@@ -7,7 +7,8 @@ import type {
 } from '../../types';
 import { origin } from '../../state/position';
 import getIframeOffset from '../iframe/get-iframe-offset';
-import applyOffset from '../iframe/apply-offset';
+import { applyTransformBox, getTransform } from '../transform';
+import { applyOffsetBox } from '../iframe/apply-offset';
 
 export default function getDimension(
   descriptor: DraggableDescriptor,
@@ -16,22 +17,31 @@ export default function getDimension(
 ): DraggableDimension {
   const computedStyles: CSSStyleDeclaration = window.getComputedStyle(el);
 
-  const offset = getIframeOffset(el);
-
-  const client: BoxModel = calculateBox(
+  const originalClient = calculateBox(
     el.getBoundingClientRect(),
     computedStyles,
   );
-  const page: BoxModel = withScroll(
-    calculateBox(
-      applyOffset(el.getBoundingClientRect(), offset),
-      computedStyles,
-    ),
+  let client = { ...originalClient };
+  let page = withScroll(
+    calculateBox(el.getBoundingClientRect(), computedStyles),
     windowScroll,
   );
 
+  const transform = getTransform(el, { x: 0, y: 0 });
+
+  if (transform) {
+    client = applyTransformBox(client, transform);
+    page = applyTransformBox(page, transform);
+  }
+
+  const iframeOffset = getIframeOffset(el);
+
+  if (iframeOffset) {
+    page = applyOffsetBox(page, iframeOffset);
+  }
+
   const placeholder: Placeholder = {
-    client,
+    client: originalClient,
     tagName: el.tagName.toLowerCase(),
     display: computedStyles.display,
   };
@@ -46,6 +56,7 @@ export default function getDimension(
     displaceBy,
     client,
     page,
+    transform,
   };
 
   return dimension;

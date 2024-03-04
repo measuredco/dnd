@@ -10,13 +10,26 @@ import type {
   ScrollSize,
 } from '../../types';
 import getScroll from './get-scroll';
-import getOffsettedBox from '../iframe/get-offsetted-box';
+import getIframeOffset from '../iframe/get-iframe-offset';
+import { applyOffsetBox } from '../iframe/apply-offset';
+import { Transform, applyTransformBox, getTransform } from '../transform';
+import { Offset } from '../iframe/offset-types';
 
 const getClient = (
   targetRef: HTMLElement,
   closestScrollable?: Element | null,
+  offset?: Offset | null,
+  transform?: Transform | null,
 ): BoxModel => {
-  const base: BoxModel = getOffsettedBox(targetRef);
+  let base: BoxModel = getBox(targetRef);
+
+  if (transform) {
+    base = applyTransformBox(base, transform);
+  }
+
+  if (offset) {
+    base = applyOffsetBox(base, offset);
+  }
 
   // Droppable has no scroll parent
   if (!closestScrollable) {
@@ -80,6 +93,7 @@ interface Args {
   isDropDisabled: boolean;
   isCombineEnabled: boolean;
   shouldClipSubject: boolean;
+  transform: Transform | null;
 }
 
 export default ({
@@ -93,7 +107,9 @@ export default ({
   shouldClipSubject,
 }: Args): DroppableDimension => {
   const closestScrollable: Element | null = env.closestScrollable;
-  const client: BoxModel = getClient(ref, closestScrollable);
+  const offset = getIframeOffset(ref);
+  const transform = getTransform(ref, { x: 0, y: 0 });
+  const client: BoxModel = getClient(ref, closestScrollable, offset, transform);
   const page: BoxModel = withScroll(client, windowScroll);
 
   const closest: Closest | null = (() => {
@@ -125,6 +141,7 @@ export default ({
     client,
     page,
     closest,
+    transform,
   });
 
   return dimension;

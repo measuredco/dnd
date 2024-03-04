@@ -1,3 +1,4 @@
+import getIframe from './get-iframe';
 import { Offset } from './offset-types';
 
 export default function getIframeOffset(el: HTMLElement) {
@@ -8,11 +9,9 @@ export default function getIframeOffset(el: HTMLElement) {
     right: 0,
   };
 
-  const refWindow = el.ownerDocument.defaultView;
+  const iframe = getIframe(el);
 
-  if (refWindow && refWindow.self !== refWindow.parent) {
-    const iframe = refWindow.frameElement as HTMLIFrameElement;
-
+  if (iframe) {
     const rect = iframe.getBoundingClientRect();
 
     offset.left = rect.left;

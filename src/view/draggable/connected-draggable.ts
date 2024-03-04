@@ -20,6 +20,7 @@ import type {
   DropResult,
   LiftEffect,
   Combine,
+  DroppableDimension,
 } from '../../types';
 import type {
   DraggableProps,
@@ -214,6 +215,7 @@ const atRest: MapProps = {
     combineTargetFor: null,
     shouldAnimateDisplacement: true,
     snapshot: getSecondarySnapshot(null),
+    sourceDroppable: null,
   },
 };
 
@@ -233,6 +235,8 @@ function getSecondarySelector(): TrySelect {
       // eslint-disable-next-line default-param-last
       combineTargetFor: DraggableId | null = null,
       shouldAnimateDisplacement: boolean,
+      dimension?: DraggableDimension,
+      sourceDroppable?: DroppableDimension | null,
     ): MapProps => ({
       mapped: {
         type: 'SECONDARY',
@@ -240,6 +244,8 @@ function getSecondarySelector(): TrySelect {
         combineTargetFor,
         shouldAnimateDisplacement,
         snapshot: getMemoizedSnapshot(combineTargetFor),
+        dimension,
+        sourceDroppable: sourceDroppable || null,
       },
     }),
   );
@@ -259,6 +265,8 @@ function getSecondarySelector(): TrySelect {
     draggingId: DraggableId,
     impact: DragImpact,
     afterCritical: LiftEffect,
+    dimension?: DraggableDimension,
+    sourceDroppable?: DroppableDimension | null,
   ): MapProps | null => {
     const visualDisplacement: Displacement | null =
       impact.displaced.visible[ownId];
@@ -289,7 +297,13 @@ function getSecondarySelector(): TrySelect {
       // We need to move backwards to close the gap that the dragging item has left
       const change: Position = negate(afterCritical.displacedBy.point);
       const offset: Position = memoizedOffset(change.x, change.y);
-      return getMemoizedProps(offset, combineTargetFor, true);
+      return getMemoizedProps(
+        offset,
+        combineTargetFor,
+        true,
+        dimension,
+        sourceDroppable,
+      );
     }
 
     if (isAfterCriticalInVirtualList) {
@@ -305,6 +319,8 @@ function getSecondarySelector(): TrySelect {
       offset,
       combineTargetFor,
       visualDisplacement.shouldAnimate,
+      dimension,
+      sourceDroppable,
     );
   };
 
@@ -319,11 +335,19 @@ function getSecondarySelector(): TrySelect {
         return null;
       }
 
+      const dimension = state.dimensions.draggables[ownProps.draggableId];
+
+      const sourceDroppable = state.critical.droppable.id
+        ? state.dimensions.droppables[state.critical.droppable.id]
+        : null;
+
       return getProps(
         ownProps.draggableId,
         state.critical.draggable.id,
         state.impact,
         state.afterCritical,
+        dimension,
+        sourceDroppable,
       );
     }
 
@@ -334,11 +358,19 @@ function getSecondarySelector(): TrySelect {
       if (completed.result.draggableId === ownProps.draggableId) {
         return null;
       }
+      const dimension = state.dimensions.draggables[ownProps.draggableId];
+
+      const sourceDroppable = completed.critical.droppable.id
+        ? state.dimensions.droppables[completed.critical.droppable.id]
+        : null;
+
       return getProps(
         ownProps.draggableId,
         completed.result.draggableId,
         completed.impact,
         completed.afterCritical,
+        dimension,
+        sourceDroppable,
       );
     }
 

@@ -13,6 +13,7 @@ import type {
   ContextId,
   ElementId,
   DraggableRubric,
+  DroppableDimension,
 } from '../../types';
 import { dropAnimationFinished } from '../../state/action-creators';
 
@@ -139,6 +140,8 @@ export interface SecondaryMapProps {
   combineTargetFor: DraggableId | null;
   shouldAnimateDisplacement: boolean;
   snapshot: DraggableStateSnapshot;
+  dimension?: DraggableDimension;
+  sourceDroppable: DroppableDimension | null;
 }
 
 export type MappedProps = DraggingMapProps | SecondaryMapProps;

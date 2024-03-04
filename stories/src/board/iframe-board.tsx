@@ -44,6 +44,7 @@ interface Props {
   useClone?: boolean;
   applyGlobalStyles?: boolean;
   autoScrollerOptions?: PartialAutoScrollerOptions;
+  scale?: number;
 }
 
 interface State {
@@ -100,8 +101,12 @@ export default class IframeBoard extends Component<Props, State> {
         key={key}
         style={{
           width: 282, // Magic number based on size of board
-          height: '100vh',
+          height: this.props.scale ? `${100 / this.props.scale}vh` : '100vh',
           border: 0,
+          transform: this.props.scale
+            ? `scale(${this.props.scale})`
+            : undefined,
+          transformOrigin: this.props.scale ? 'top' : undefined,
         }}
       >
         <Droppable

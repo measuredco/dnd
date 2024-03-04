@@ -1,4 +1,4 @@
-import { Rect } from 'css-box-model';
+import { BoxModel, Rect } from 'css-box-model';
 import { Offset } from './offset-types';
 
 export default function applyOffset(rect: Partial<Rect>, offset: Offset): Rect {
@@ -18,3 +18,13 @@ export default function applyOffset(rect: Partial<Rect>, offset: Offset): Rect {
     height: rect.height || 0,
   };
 }
+
+export const applyOffsetBox = (box: BoxModel, offset: Offset): BoxModel => {
+  return {
+    ...box,
+    borderBox: applyOffset(box.borderBox, offset),
+    marginBox: applyOffset(box.marginBox, offset),
+    paddingBox: applyOffset(box.paddingBox, offset),
+    contentBox: applyOffset(box.contentBox, offset),
+  };
+};

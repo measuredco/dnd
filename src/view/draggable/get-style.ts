@@ -59,22 +59,27 @@ function getDraggingStyle(dragging: DraggingMapProps): DraggingStyle {
   const shouldAnimate: boolean = getShouldDraggingAnimate(dragging);
   const isDropAnimating = Boolean(dropping);
 
+  const untransformedOffset = {
+    x: offset.x / (dimension?.transform?.matrix.scaleX || 1),
+    y: offset.y / (dimension?.transform?.matrix.scaleY || 1),
+  };
+
   const transform: string | undefined = isDropAnimating
-    ? transforms.drop(offset, isCombining)
-    : transforms.moveTo(offset);
+    ? transforms.drop(untransformedOffset, isCombining)
+    : transforms.moveTo(untransformedOffset);
 
   const style: DraggingStyle = {
     // ## Placement
     position: 'fixed',
     // As we are applying the margins we need to align to the start of the marginBox
-    top: box.marginBox.top,
-    left: box.marginBox.left,
+    top: box.marginBox.top / (dimension.transform?.matrix.scaleX || 1),
+    left: box.marginBox.left / (dimension.transform?.matrix.scaleY || 1),
 
     // ## Sizing
     // Locking these down as pulling the node out of the DOM could cause it to change size
     boxSizing: 'border-box',
-    width: box.borderBox.width,
-    height: box.borderBox.height,
+    width: box.borderBox.width / (dimension.transform?.matrix.scaleX || 1),
+    height: box.borderBox.height / (dimension.transform?.matrix.scaleY || 1),
 
     // ## Movement
     // Opting out of the standard css transition for the dragging item
@@ -94,8 +99,13 @@ function getDraggingStyle(dragging: DraggingMapProps): DraggingStyle {
 }
 
 function getSecondaryStyle(secondary: SecondaryMapProps): NotDraggingStyle {
+  const { offset, sourceDroppable } = secondary;
+
   return {
-    transform: transforms.moveTo(secondary.offset),
+    transform: transforms.moveTo({
+      x: offset.x / (sourceDroppable?.transform?.matrix.scaleX || 1),
+      y: offset.y / (sourceDroppable?.transform?.matrix.scaleY || 1),
+    }),
     // transition style is applied in the head
     transition: secondary.shouldAnimateDisplacement ? undefined : 'none',
   };
