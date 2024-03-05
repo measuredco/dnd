@@ -31,7 +31,7 @@ export default ({
 }: Args): StartPublishingResult => {
   const timingKey = 'Initial collection from DOM';
   timings.start(timingKey);
-  const viewport: Viewport = getViewport(critical);
+  const viewport: Viewport = getViewport();
   const windowScroll: Position = viewport.scroll.current;
 
   const home: DroppableDescriptor = critical.droppable;

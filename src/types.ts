@@ -309,7 +309,6 @@ export interface Viewport {
   // live updates with the latest values
   frame: Rect;
   scroll: ScrollDetails;
-  offset: Rect;
 }
 
 export interface LiftEffect {

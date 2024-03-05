@@ -6,10 +6,6 @@ export default function offsetPoint(
   y: number,
   win: Window,
 ): Position {
-  // const { clientX, clientY } = event;
-
-  // const win = event.currentTarget as Window;
-
   let offsetX = 0;
   let offsetY = 0;
 
@@ -34,8 +30,6 @@ export default function offsetPoint(
         x: transformedX + offsetX,
         y: transformedY + offsetY,
       };
-
-      console.log(transformedX, transformedY);
 
       return point;
     }

@@ -1,4 +1,4 @@
-import { type Position } from 'css-box-model';
+import type { Position } from 'css-box-model';
 import type { PublicResult } from '../move-in-direction-types';
 import type {
   DroppableDimension,

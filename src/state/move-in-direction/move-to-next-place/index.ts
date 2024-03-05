@@ -15,7 +15,7 @@ import isHomeOf from '../../droppable/is-home-of';
 import getPageBorderBoxCenter from '../../get-center-from-impact/get-page-border-box-center';
 import speculativelyIncrease from '../../update-displacement-visibility/speculatively-increase';
 import getClientFromPageBorderBoxCenter from '../../get-center-from-impact/get-client-border-box-center/get-client-from-page-border-box-center';
-import { add, subtract } from '../../position';
+import { subtract } from '../../position';
 import isTotallyVisibleInNewLocation from './is-totally-visible-in-new-location';
 
 interface Args {
@@ -103,7 +103,6 @@ export default ({
       draggable,
       viewport,
     });
-
     return {
       clientSelection,
       impact,
@@ -123,6 +122,7 @@ export default ({
     draggables,
     maxScrollChange: distance,
   });
+
   return {
     clientSelection: previousClientSelection,
     impact: cautious,
