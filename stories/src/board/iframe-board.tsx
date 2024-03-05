@@ -96,38 +96,49 @@ export default class IframeBoard extends Component<Props, State> {
     const columns: QuoteMap = this.state.columns;
     const ordered: string[] = this.state.ordered;
 
-    const board = ordered.map((key: string, index: number) => (
-      <AutoFrame
-        key={key}
-        style={{
-          width: 282, // Magic number based on size of board
-          height: this.props.scale ? `${100 / this.props.scale}vh` : '100vh',
-          border: 0,
-          transform: this.props.scale
-            ? `scale(${this.props.scale})`
-            : undefined,
-          transformOrigin: this.props.scale ? 'top' : undefined,
-        }}
-      >
-        <Droppable
-          droppableId={`board-iframe-${index}`}
-          type="COLUMN"
-          direction="horizontal"
+    const board = ordered.map((key: string, index: number) => {
+      const El = index > 0 ? AutoFrame : 'div';
+      return (
+        <El
+          key={key}
+          style={{
+            width: 282, // Magic number based on size of board
+            height:
+              this.props.scale && index > 0
+                ? `${100 / this.props.scale}vh`
+                : '100vh',
+            border: 0,
+            transform:
+              this.props.scale && index > 0
+                ? `scale(${this.props.scale})`
+                : undefined,
+            transformOrigin: this.props.scale && index > 0 ? 'top' : undefined,
+          }}
         >
-          {(provided: DroppableProvided) => (
-            <Column ref={provided.innerRef} {...provided.droppableProps}>
-              <Header>
-                <Title aria-label={`${key} quote list`}>
-                  {key} (iframe {index})
-                </Title>
-              </Header>
-              <QuoteList listId={key} listType="QUOTE" quotes={columns[key]} />
-              {provided.placeholder}
-            </Column>
-          )}
-        </Droppable>
-      </AutoFrame>
-    ));
+          <Droppable
+            droppableId={`board-iframe-${index}`}
+            type="COLUMN"
+            direction="horizontal"
+          >
+            {(provided: DroppableProvided) => (
+              <Column ref={provided.innerRef} {...provided.droppableProps}>
+                <Header>
+                  <Title aria-label={`${key} quote list`}>
+                    {key} ({index === 0 ? 'host' : `iframe ${index}`})
+                  </Title>
+                </Header>
+                <QuoteList
+                  listId={key}
+                  listType="QUOTE"
+                  quotes={columns[key]}
+                />
+                {provided.placeholder}
+              </Column>
+            )}
+          </Droppable>
+        </El>
+      );
+    });
 
     return (
       <React.Fragment>
