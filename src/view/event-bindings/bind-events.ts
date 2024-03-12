@@ -1,4 +1,3 @@
-import { IframeHTMLAttributes } from 'react';
 import { querySelectorAll } from '../../query-selector-all';
 import type {
   AnyEventBinding,
@@ -16,6 +15,26 @@ function getOptions(
     ...shared,
     ...fromBinding,
   };
+}
+
+let loaded = false;
+
+function bindEvent(win: Window, binding: EventBinding, options: EventOptions) {
+  let timer: number | undefined;
+
+  if (!loaded) {
+    // Some browsers require us to defer binding events, i.e. Safari
+    timer = setInterval(() => {
+      if ((win as Window).document.readyState === 'complete') {
+        win.addEventListener(binding.eventName, binding.fn, options);
+        loaded = true;
+      }
+    }, 100);
+  } else {
+    win.addEventListener(binding.eventName, binding.fn, options);
+  }
+
+  return timer;
 }
 
 export default function bindEvents(
@@ -37,9 +56,10 @@ export default function bindEvents(
 
         const options = getOptions(sharedOptions, binding.options);
 
-        win.addEventListener(binding.eventName, binding.fn, options);
+        const timer = bindEvent(win as Window, binding, options);
 
         return function unbind() {
+          clearInterval(timer);
           win.removeEventListener(binding.eventName, binding.fn, options);
         };
       });
