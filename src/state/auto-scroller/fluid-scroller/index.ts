@@ -8,7 +8,7 @@ import { AutoScrollerOptions } from './auto-scroller-options-types';
 import { defaultAutoScrollerOptions } from './config';
 
 export interface PublicArgs {
-  scrollWindow: (change: Position) => void;
+  scrollWindow: (change: Position, win?: Window) => void;
   scrollDroppable: (id: DroppableId, change: Position) => void;
   getAutoScrollerOptions?: () => AutoScrollerOptions;
 }
