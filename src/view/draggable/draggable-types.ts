@@ -168,6 +168,7 @@ export interface DraggableProps {
   isDragDisabled?: boolean;
   disableInteractiveElementBlocking?: boolean;
   shouldRespectForcePress?: boolean;
+  disableSecondaryAnimation?: boolean;
 }
 
 export interface PrivateOwnProps extends DraggableProps {

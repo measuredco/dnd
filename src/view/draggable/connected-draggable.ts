@@ -254,9 +254,10 @@ function getSecondarySelector(): TrySelect {
   // otherwise we will return null to get the default props
   const getFallback = (
     combineTargetFor?: DraggableId | null,
+    disableSecondaryAnimation?: boolean,
   ): MapProps | null => {
     return combineTargetFor
-      ? getMemoizedProps(origin, combineTargetFor, true)
+      ? getMemoizedProps(origin, combineTargetFor, !disableSecondaryAnimation)
       : null;
   };
 
@@ -267,6 +268,7 @@ function getSecondarySelector(): TrySelect {
     afterCritical: LiftEffect,
     dimension?: DraggableDimension,
     sourceDroppable?: DroppableDimension | null,
+    disableSecondaryAnimation?: boolean,
   ): MapProps | null => {
     const visualDisplacement: Displacement | null =
       impact.displaced.visible[ownId];
@@ -280,7 +282,7 @@ function getSecondarySelector(): TrySelect {
 
     if (!visualDisplacement) {
       if (!isAfterCriticalInVirtualList) {
-        return getFallback(combineTargetFor);
+        return getFallback(combineTargetFor, disableSecondaryAnimation);
       }
 
       // After critical but not visibly displaced in a virtual list
@@ -300,7 +302,7 @@ function getSecondarySelector(): TrySelect {
       return getMemoizedProps(
         offset,
         combineTargetFor,
-        true,
+        !disableSecondaryAnimation,
         dimension,
         sourceDroppable,
       );
@@ -318,7 +320,7 @@ function getSecondarySelector(): TrySelect {
     return getMemoizedProps(
       offset,
       combineTargetFor,
-      visualDisplacement.shouldAnimate,
+      disableSecondaryAnimation ? false : visualDisplacement.shouldAnimate,
       dimension,
       sourceDroppable,
     );
@@ -348,6 +350,7 @@ function getSecondarySelector(): TrySelect {
         state.afterCritical,
         dimension,
         sourceDroppable,
+        ownProps.disableSecondaryAnimation,
       );
     }
 
@@ -371,6 +374,7 @@ function getSecondarySelector(): TrySelect {
         completed.afterCritical,
         dimension,
         sourceDroppable,
+        ownProps.disableSecondaryAnimation,
       );
     }
 
@@ -387,10 +391,27 @@ export const makeMapStateToProps = (): Selector => {
   const draggingSelector: TrySelect = getDraggableSelector();
   const secondarySelector: TrySelect = getSecondarySelector();
 
-  const selector = (state: State, ownProps: OwnProps): MapProps =>
-    draggingSelector(state, ownProps) ||
-    secondarySelector(state, ownProps) ||
-    atRest;
+  const selector = (state: State, ownProps: OwnProps): MapProps => {
+    // Modify atRest based on props
+    const atRestLocal =
+      atRest.mapped.type === 'DRAGGING'
+        ? atRest
+        : {
+            ...atRest,
+            mapped: {
+              ...atRest.mapped,
+              shouldAnimateDisplacement: ownProps.disableSecondaryAnimation
+                ? false
+                : atRest.mapped.shouldAnimateDisplacement,
+            },
+          };
+
+    return (
+      draggingSelector(state, ownProps) ||
+      secondarySelector(state, ownProps) ||
+      atRestLocal
+    );
+  };
 
   return selector;
 };
