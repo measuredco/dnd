@@ -65,7 +65,9 @@ export default function useStyleMarshal(contextId: ContextId, nonce?: string) {
       getHead(document),
       ...(
         querySelectorAll(document, `[${prefix}-iframe]`) as HTMLIFrameElement[]
-      ).map((iframe) => getHead(iframe.contentWindow!.document)),
+      )
+        .filter((iframe) => iframe.contentWindow?.document)
+        .map((iframe) => getHead(iframe.contentWindow!.document)),
     ];
 
     // Create initial style elements

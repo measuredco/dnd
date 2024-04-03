@@ -28,7 +28,9 @@ export default function querySelectorAllIframe(selector: string) {
   const iframePossible = iframes.reduce<HTMLElement[]>(
     (acc, iframe) => [
       ...acc,
-      ...querySelectorAll(iframe.contentWindow!.document, selector),
+      ...(iframe.contentWindow?.document
+        ? querySelectorAll(iframe.contentWindow.document, selector)
+        : []),
     ],
     [],
   );
