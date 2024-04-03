@@ -46,7 +46,7 @@ export default function bindEvents(
     (binding): UnbindFn[] => {
       const iframes: HTMLIFrameElement[] = querySelectorAll(
         window.document,
-        'iframe',
+        '[data-rfd-iframe]',
       ) as HTMLIFrameElement[];
 
       const windows = [el, ...iframes.map((iframe) => iframe.contentWindow)];
