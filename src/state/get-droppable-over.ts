@@ -75,6 +75,53 @@ function getFurthestAway({
   return sorted[0] ? sorted[0].id : null;
 }
 
+/**
+ * normalizeFamilies
+ *
+ * Groups all items that share a common root `parent`, and selects the deepest item
+ * in that group that contains the center point of the dragged item to represent
+ * the "family".
+ */
+function normalizeFamilies(
+  pageBorderBox: Rect,
+  candidates: DroppableDimension[],
+) {
+  const families = candidates.reduce<Record<string, DroppableDimension[][]>>(
+    (acc, candidate) => {
+      const familyName = candidate.parents[0]?.id || candidate.descriptor.id;
+      const family = acc[familyName] || [];
+
+      const generation = candidate.parents.length;
+
+      family[generation] = [...(family[generation] || []), candidate];
+
+      return {
+        ...acc,
+        [familyName]: family,
+      };
+    },
+    {},
+  );
+
+  return Object.keys(families).map((familyName) => {
+    const family = families[familyName].flat();
+
+    const reversedFamily = [...family].reverse();
+
+    // Get first member of family that contains the draggable
+    const chosenMember = reversedFamily.find((member) => {
+      return (
+        pageBorderBox.center.x < member.page.borderBox.right &&
+        pageBorderBox.center.x > member.page.borderBox.left &&
+        pageBorderBox.center.y > member.page.borderBox.top &&
+        pageBorderBox.center.y < member.page.borderBox.bottom
+      );
+    });
+
+    return chosenMember || family[0];
+  });
+}
+
 export default function getDroppableOver({
   pageBorderBox,
   draggable,
@@ -146,12 +193,19 @@ export default function getDroppableOver({
     return candidates[0].descriptor.id;
   }
 
-  // Multiple options returned
+  // Select the best candidate from each group that share a common root ancestor
+  const normalizedCandidates = normalizeFamilies(pageBorderBox, candidates);
+
+  // All candidates were in the same family
+  if (normalizedCandidates.length === 1) {
+    return normalizedCandidates[0].descriptor.id;
+  }
+
   // Should only occur with really large items
   // Going to use fallback: distance from home
   return getFurthestAway({
     pageBorderBox,
     draggable,
-    candidates,
+    candidates: normalizedCandidates,
   });
 }

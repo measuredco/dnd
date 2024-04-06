@@ -154,6 +154,7 @@ export interface DroppableDimension {
   // what is visible through the frame
   subject: DroppableSubject;
   transform: Transform | null;
+  parents: DroppableDescriptor[];
 }
 export interface DraggableLocation {
   droppableId: DroppableId;

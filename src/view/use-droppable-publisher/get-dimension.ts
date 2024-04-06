@@ -14,6 +14,7 @@ import getIframeOffset from '../iframe/get-iframe-offset';
 import { applyOffsetBox } from '../iframe/apply-offset';
 import { Transform, applyTransformBox, getTransform } from '../transform';
 import { Offset } from '../iframe/offset-types';
+import { prefix } from '../data-attributes';
 
 const getClient = (
   targetRef: HTMLElement,
@@ -96,6 +97,37 @@ interface Args {
   transform: Transform | null;
 }
 
+const getParents = (ref: HTMLElement) => {
+  const contextId = ref.getAttribute(`${prefix}-droppable-context-id`);
+
+  const parentDescriptors: DroppableDescriptor[] = [];
+
+  if (!contextId) return [];
+
+  let currentEl: HTMLElement | null | undefined = ref;
+
+  while (currentEl) {
+    currentEl = currentEl.parentElement?.closest(
+      `[${prefix}-droppable-context-id="${contextId}"]`,
+    );
+
+    const id = currentEl?.getAttribute(`${prefix}-droppable-id`);
+
+    if (id) {
+      parentDescriptors.push({
+        id,
+        mode: 'standard',
+        type: 'DEFAULT',
+      });
+    }
+  }
+
+  // Parents need reversing
+  parentDescriptors.reverse();
+
+  return parentDescriptors;
+};
+
 export default ({
   ref,
   descriptor,
@@ -132,6 +164,8 @@ export default ({
     };
   })();
 
+  const parents = getParents(ref);
+
   const dimension: DroppableDimension = getDroppableDimension({
     descriptor,
     isEnabled: !isDropDisabled,
@@ -142,6 +176,7 @@ export default ({
     page,
     closest,
     transform,
+    parents,
   });
 
   return dimension;

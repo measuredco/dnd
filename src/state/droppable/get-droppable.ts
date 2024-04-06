@@ -32,6 +32,7 @@ interface Args {
   page: BoxModel;
   closest?: Closest | null;
   transform: Transform | null;
+  parents: DroppableDescriptor[];
 }
 
 export default ({
@@ -44,6 +45,7 @@ export default ({
   page,
   closest,
   transform,
+  parents,
 }: Args): DroppableDimension => {
   const frame: Scrollable | null = (() => {
     if (!closest) {
@@ -98,6 +100,7 @@ export default ({
     frame,
     subject,
     transform,
+    parents,
   };
 
   return dimension;
