@@ -86,7 +86,11 @@ const findNearestTransform = (el: HTMLElement): HTMLElement | null => {
   if (!el.parentElement) {
     const refWindow = el.ownerDocument.defaultView;
 
-    if (refWindow && refWindow.self !== refWindow.parent) {
+    if (
+      refWindow &&
+      refWindow.self !== refWindow.parent &&
+      refWindow.frameElement
+    ) {
       const iframe = refWindow.frameElement as HTMLIFrameElement;
 
       return findNearestTransform(iframe);

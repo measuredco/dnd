@@ -52,7 +52,7 @@ export default ({
 
   const win = el?.ownerDocument.defaultView || window;
 
-  const isInIframe = win !== window;
+  const isInIframe = win !== window && win.frameElement;
 
   if (isInIframe) {
     const iframe = win.frameElement as HTMLIFrameElement;

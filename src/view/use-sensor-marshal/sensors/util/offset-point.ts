@@ -10,28 +10,31 @@ export default function offsetPoint(
   let offsetY = 0;
 
   if (win.parent !== win.self) {
-    const iframe = win.frameElement as HTMLIFrameElement;
-    const rect = iframe.getBoundingClientRect();
+    const iframe = win.frameElement as HTMLIFrameElement | null;
 
-    const transform = getTransform(iframe);
+    if (iframe) {
+      const rect = iframe.getBoundingClientRect();
 
-    offsetX = rect.left;
-    offsetY = rect.top;
+      const transform = getTransform(iframe);
 
-    if (transform) {
-      const { x: transformedX, y: transformedY } = applyTransformPoint(
-        x,
-        y,
-        transform.matrix,
-        transform.origin,
-      );
+      offsetX = rect.left;
+      offsetY = rect.top;
 
-      const point: Position = {
-        x: transformedX + offsetX,
-        y: transformedY + offsetY,
-      };
+      if (transform) {
+        const { x: transformedX, y: transformedY } = applyTransformPoint(
+          x,
+          y,
+          transform.matrix,
+          transform.origin,
+        );
 
-      return point;
+        const point: Position = {
+          x: transformedX + offsetX,
+          y: transformedY + offsetY,
+        };
+
+        return point;
+      }
     }
   }
 
