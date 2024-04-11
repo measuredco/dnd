@@ -20,6 +20,7 @@ import type {
   DropResult,
   LiftEffect,
   Combine,
+  DroppableDimension,
 } from '../../types';
 import type {
   DraggableProps,
@@ -214,6 +215,7 @@ const atRest: MapProps = {
     combineTargetFor: null,
     shouldAnimateDisplacement: true,
     snapshot: getSecondarySnapshot(null),
+    sourceDroppable: null,
   },
 };
 
@@ -233,6 +235,8 @@ function getSecondarySelector(): TrySelect {
       // eslint-disable-next-line default-param-last
       combineTargetFor: DraggableId | null = null,
       shouldAnimateDisplacement: boolean,
+      dimension?: DraggableDimension,
+      sourceDroppable?: DroppableDimension | null,
     ): MapProps => ({
       mapped: {
         type: 'SECONDARY',
@@ -240,6 +244,8 @@ function getSecondarySelector(): TrySelect {
         combineTargetFor,
         shouldAnimateDisplacement,
         snapshot: getMemoizedSnapshot(combineTargetFor),
+        dimension,
+        sourceDroppable: sourceDroppable || null,
       },
     }),
   );
@@ -248,9 +254,10 @@ function getSecondarySelector(): TrySelect {
   // otherwise we will return null to get the default props
   const getFallback = (
     combineTargetFor?: DraggableId | null,
+    disableSecondaryAnimation?: boolean,
   ): MapProps | null => {
     return combineTargetFor
-      ? getMemoizedProps(origin, combineTargetFor, true)
+      ? getMemoizedProps(origin, combineTargetFor, !disableSecondaryAnimation)
       : null;
   };
 
@@ -259,6 +266,9 @@ function getSecondarySelector(): TrySelect {
     draggingId: DraggableId,
     impact: DragImpact,
     afterCritical: LiftEffect,
+    dimension?: DraggableDimension,
+    sourceDroppable?: DroppableDimension | null,
+    disableSecondaryAnimation?: boolean,
   ): MapProps | null => {
     const visualDisplacement: Displacement | null =
       impact.displaced.visible[ownId];
@@ -272,7 +282,7 @@ function getSecondarySelector(): TrySelect {
 
     if (!visualDisplacement) {
       if (!isAfterCriticalInVirtualList) {
-        return getFallback(combineTargetFor);
+        return getFallback(combineTargetFor, disableSecondaryAnimation);
       }
 
       // After critical but not visibly displaced in a virtual list
@@ -289,7 +299,13 @@ function getSecondarySelector(): TrySelect {
       // We need to move backwards to close the gap that the dragging item has left
       const change: Position = negate(afterCritical.displacedBy.point);
       const offset: Position = memoizedOffset(change.x, change.y);
-      return getMemoizedProps(offset, combineTargetFor, true);
+      return getMemoizedProps(
+        offset,
+        combineTargetFor,
+        !disableSecondaryAnimation,
+        dimension,
+        sourceDroppable,
+      );
     }
 
     if (isAfterCriticalInVirtualList) {
@@ -304,7 +320,9 @@ function getSecondarySelector(): TrySelect {
     return getMemoizedProps(
       offset,
       combineTargetFor,
-      visualDisplacement.shouldAnimate,
+      disableSecondaryAnimation ? false : visualDisplacement.shouldAnimate,
+      dimension,
+      sourceDroppable,
     );
   };
 
@@ -319,11 +337,20 @@ function getSecondarySelector(): TrySelect {
         return null;
       }
 
+      const dimension = state.dimensions.draggables[ownProps.draggableId];
+
+      const sourceDroppable = state.critical.droppable.id
+        ? state.dimensions.droppables[state.critical.droppable.id]
+        : null;
+
       return getProps(
         ownProps.draggableId,
         state.critical.draggable.id,
         state.impact,
         state.afterCritical,
+        dimension,
+        sourceDroppable,
+        ownProps.disableSecondaryAnimation,
       );
     }
 
@@ -334,11 +361,20 @@ function getSecondarySelector(): TrySelect {
       if (completed.result.draggableId === ownProps.draggableId) {
         return null;
       }
+      const dimension = state.dimensions.draggables[ownProps.draggableId];
+
+      const sourceDroppable = completed.critical.droppable.id
+        ? state.dimensions.droppables[completed.critical.droppable.id]
+        : null;
+
       return getProps(
         ownProps.draggableId,
         completed.result.draggableId,
         completed.impact,
         completed.afterCritical,
+        dimension,
+        sourceDroppable,
+        ownProps.disableSecondaryAnimation,
       );
     }
 
@@ -355,10 +391,27 @@ export const makeMapStateToProps = (): Selector => {
   const draggingSelector: TrySelect = getDraggableSelector();
   const secondarySelector: TrySelect = getSecondarySelector();
 
-  const selector = (state: State, ownProps: OwnProps): MapProps =>
-    draggingSelector(state, ownProps) ||
-    secondarySelector(state, ownProps) ||
-    atRest;
+  const selector = (state: State, ownProps: OwnProps): MapProps => {
+    // Modify atRest based on props
+    const atRestLocal =
+      atRest.mapped.type === 'DRAGGING'
+        ? atRest
+        : {
+            ...atRest,
+            mapped: {
+              ...atRest.mapped,
+              shouldAnimateDisplacement: ownProps.disableSecondaryAnimation
+                ? false
+                : atRest.mapped.shouldAnimateDisplacement,
+            },
+          };
+
+    return (
+      draggingSelector(state, ownProps) ||
+      secondarySelector(state, ownProps) ||
+      atRestLocal
+    );
+  };
 
   return selector;
 };

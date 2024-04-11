@@ -11,6 +11,7 @@ import { vertical, horizontal } from '../axis';
 import { origin } from '../position';
 import getMaxScroll from '../get-max-scroll';
 import getSubject from './util/get-subject';
+import { Transform } from '../../view/transform';
 
 export interface Closest {
   client: BoxModel;
@@ -30,6 +31,8 @@ interface Args {
   // is null when in a fixed container
   page: BoxModel;
   closest?: Closest | null;
+  transform: Transform | null;
+  parents: DroppableDescriptor[];
 }
 
 export default ({
@@ -41,6 +44,8 @@ export default ({
   client,
   page,
   closest,
+  transform,
+  parents,
 }: Args): DroppableDimension => {
   const frame: Scrollable | null = (() => {
     if (!closest) {
@@ -94,6 +99,8 @@ export default ({
     page,
     frame,
     subject,
+    transform,
+    parents,
   };
 
   return dimension;

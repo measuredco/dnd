@@ -182,7 +182,7 @@ function QuoteItem(props: Props) {
 
   return (
     <Container
-      href={quote.author.url}
+      href={quote.author.url || undefined}
       isDragging={isDragging}
       isGroupedOver={Boolean(isGroupedOver)}
       colors={quote.author.colors}

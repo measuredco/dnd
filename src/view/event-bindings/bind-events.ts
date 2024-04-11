@@ -1,3 +1,4 @@
+import { querySelectorAll } from '../../query-selector-all';
 import type {
   AnyEventBinding,
   EventBinding,
@@ -16,20 +17,52 @@ function getOptions(
   };
 }
 
+let loaded = false;
+
+function bindEvent(win: Window, binding: EventBinding, options: EventOptions) {
+  let timer: number | undefined;
+
+  if (!loaded) {
+    // Some browsers require us to defer binding events, i.e. Safari
+    timer = setInterval(() => {
+      if ((win as Window).document.readyState === 'complete') {
+        win.addEventListener(binding.eventName, binding.fn, options);
+        loaded = true;
+      }
+    }, 100);
+  } else {
+    win.addEventListener(binding.eventName, binding.fn, options);
+  }
+
+  return timer;
+}
+
 export default function bindEvents(
   el: HTMLElement | Window,
   bindings: AnyEventBinding[],
   sharedOptions?: EventOptions,
 ): () => void {
-  const unbindings: UnbindFn[] = (bindings as EventBinding[]).map(
-    (binding): UnbindFn => {
-      const options = getOptions(sharedOptions, binding.options);
+  const unbindings: UnbindFn[] = (bindings as EventBinding[]).flatMap(
+    (binding): UnbindFn[] => {
+      const iframes: HTMLIFrameElement[] = querySelectorAll(
+        window.document,
+        '[data-rfd-iframe]',
+      ) as HTMLIFrameElement[];
 
-      el.addEventListener(binding.eventName, binding.fn, options);
+      const windows = [el, ...iframes.map((iframe) => iframe.contentWindow)];
 
-      return function unbind() {
-        el.removeEventListener(binding.eventName, binding.fn, options);
-      };
+      return windows.map((win) => {
+        if (!win) return function unbind() {};
+
+        const options = getOptions(sharedOptions, binding.options);
+
+        const timer = bindEvent(win as Window, binding, options);
+
+        return function unbind() {
+          clearInterval(timer);
+          win.removeEventListener(binding.eventName, binding.fn, options);
+        };
+      });
     },
   );
 

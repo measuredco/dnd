@@ -11,12 +11,13 @@ import whatIsDraggedOver from '../../droppable/what-is-dragged-over';
 import getWindowScrollChange from './get-window-scroll-change';
 import getDroppableScrollChange from './get-droppable-scroll-change';
 import { AutoScrollerOptions } from './auto-scroller-options-types';
+import getIframeScroll from './get-iframe-scroll';
 
 interface Args {
   state: DraggingState;
   dragStartTime: number;
   shouldUseTimeDampening: boolean;
-  scrollWindow: (scroll: Position) => void;
+  scrollWindow: (scroll: Position, win?: Window) => void;
   scrollDroppable: (id: DroppableId, scroll: Position) => void;
   getAutoScrollerOptions: () => AutoScrollerOptions;
 }
@@ -49,6 +50,20 @@ export default ({
       scrollWindow(change);
       return;
     }
+  }
+
+  const iframeScroll = getIframeScroll({
+    state,
+    dragStartTime,
+    shouldUseTimeDampening,
+    getAutoScrollerOptions,
+    draggable,
+  });
+
+  if (iframeScroll?.change) {
+    scrollWindow(iframeScroll.change, iframeScroll.window);
+
+    return;
   }
 
   const droppable: DroppableDimension | null = getBestScrollableDroppable({

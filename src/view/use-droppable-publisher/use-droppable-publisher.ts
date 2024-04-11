@@ -4,7 +4,7 @@ import rafSchedule from 'raf-schd';
 import { useMemo, useCallback } from 'use-memo-one';
 import memoizeOne from 'memoize-one';
 import { invariant } from '../../invariant';
-import checkForNestedScrollContainers from './check-for-nested-scroll-container';
+// import checkForNestedScrollContainers from './check-for-nested-scroll-container';
 import * as dataAttr from '../data-attributes';
 import { origin } from '../../state/position';
 import getScroll from './get-scroll';
@@ -33,6 +33,7 @@ import useRequiredContext from '../use-required-context';
 import usePreviousRef from '../use-previous-ref';
 import useLayoutEffect from '../use-isomorphic-layout-effect';
 import useUniqueId from '../use-unique-id';
+import getScrollable from './get-scrollable';
 
 interface Props {
   droppableId: DroppableId;
@@ -153,7 +154,7 @@ export default function useDroppablePublisher(args: Props) {
         shouldClipSubject: !previous.ignoreContainerClipping,
       });
 
-      const scrollable: Element | null = env.closestScrollable;
+      const scrollable = env.closestScrollable;
 
       if (scrollable) {
         scrollable.setAttribute(
@@ -162,15 +163,15 @@ export default function useDroppablePublisher(args: Props) {
         );
 
         // bind scroll listener
-        scrollable.addEventListener(
+        getScrollable(scrollable).addEventListener(
           'scroll',
           onClosestScroll,
           getListenerOptions(dragging.scrollOptions),
         );
         // print a debug warning if using an unsupported nested scroll container setup
-        if (process.env.NODE_ENV !== 'production') {
-          checkForNestedScrollContainers(scrollable);
-        }
+        // if (process.env.NODE_ENV !== 'production') {
+        //   checkForNestedScrollContainers(scrollable);
+        // }
       }
 
       return dimension;
@@ -204,7 +205,7 @@ export default function useDroppablePublisher(args: Props) {
     // unwatch scroll
     scheduleScrollUpdate.cancel();
     closest.removeAttribute(dataAttr.scrollContainer.contextId);
-    closest.removeEventListener(
+    getScrollable(closest).removeEventListener(
       'scroll',
       onClosestScroll,
       // See: https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/removeEventListener

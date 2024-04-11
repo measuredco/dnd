@@ -21,6 +21,7 @@ import preventStandardKeyEvents from './util/prevent-standard-key-events';
 import supportedPageVisibilityEventName from './util/supported-page-visibility-event-name';
 import useLayoutEffect from '../../use-isomorphic-layout-effect';
 import { noop } from '../../../empty';
+import offsetPoint from './util/offset-point';
 
 // https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/button
 export const primaryButton = 0;
@@ -72,15 +73,16 @@ function getCaptureBindings({
     {
       eventName: 'mousemove',
       fn: (event: MouseEvent) => {
-        const { button, clientX, clientY } = event;
+        const { button } = event;
         if (button !== primaryButton) {
           return;
         }
 
-        const point: Position = {
-          x: clientX,
-          y: clientY,
-        };
+        const point = offsetPoint(
+          event.clientX,
+          event.clientY,
+          event.currentTarget as Window,
+        );
 
         const phase: Phase = getPhase();
 
@@ -252,10 +254,11 @@ export default function useMouseSensor(api: SensorAPI) {
         // consuming the event
         event.preventDefault();
 
-        const point: Position = {
-          x: event.clientX,
-          y: event.clientY,
-        };
+        const point = offsetPoint(
+          event.clientX,
+          event.clientY,
+          event.currentTarget as Window,
+        );
 
         // unbind this listener
         unbindEventsRef.current();

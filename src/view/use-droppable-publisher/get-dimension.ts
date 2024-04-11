@@ -10,12 +10,27 @@ import type {
   ScrollSize,
 } from '../../types';
 import getScroll from './get-scroll';
+import getIframeOffset from '../iframe/get-iframe-offset';
+import { applyOffsetBox } from '../iframe/apply-offset';
+import { Transform, applyTransformBox, getTransform } from '../transform';
+import { Offset } from '../iframe/offset-types';
+import { prefix } from '../data-attributes';
 
 const getClient = (
   targetRef: HTMLElement,
   closestScrollable?: Element | null,
+  offset?: Offset | null,
+  transform?: Transform | null,
 ): BoxModel => {
-  const base: BoxModel = getBox(targetRef);
+  let base: BoxModel = getBox(targetRef);
+
+  if (transform) {
+    base = applyTransformBox(base, transform);
+  }
+
+  if (offset) {
+    base = applyOffsetBox(base, offset);
+  }
 
   // Droppable has no scroll parent
   if (!closestScrollable) {
@@ -79,7 +94,39 @@ interface Args {
   isDropDisabled: boolean;
   isCombineEnabled: boolean;
   shouldClipSubject: boolean;
+  transform: Transform | null;
 }
+
+const getParents = (ref: HTMLElement) => {
+  const contextId = ref.getAttribute(`${prefix}-droppable-context-id`);
+
+  const parentDescriptors: DroppableDescriptor[] = [];
+
+  if (!contextId) return [];
+
+  let currentEl: HTMLElement | null | undefined = ref;
+
+  while (currentEl) {
+    currentEl = currentEl.parentElement?.closest(
+      `[${prefix}-droppable-context-id="${contextId}"]`,
+    );
+
+    const id = currentEl?.getAttribute(`${prefix}-droppable-id`);
+
+    if (id) {
+      parentDescriptors.push({
+        id,
+        mode: 'standard',
+        type: 'DEFAULT',
+      });
+    }
+  }
+
+  // Parents need reversing
+  parentDescriptors.reverse();
+
+  return parentDescriptors;
+};
 
 export default ({
   ref,
@@ -92,7 +139,9 @@ export default ({
   shouldClipSubject,
 }: Args): DroppableDimension => {
   const closestScrollable: Element | null = env.closestScrollable;
-  const client: BoxModel = getClient(ref, closestScrollable);
+  const offset = getIframeOffset(ref);
+  const transform = getTransform(ref, { x: 0, y: 0 });
+  const client: BoxModel = getClient(ref, closestScrollable, offset, transform);
   const page: BoxModel = withScroll(client, windowScroll);
 
   const closest: Closest | null = (() => {
@@ -115,6 +164,8 @@ export default ({
     };
   })();
 
+  const parents = getParents(ref);
+
   const dimension: DroppableDimension = getDroppableDimension({
     descriptor,
     isEnabled: !isDropDisabled,
@@ -124,6 +175,8 @@ export default ({
     client,
     page,
     closest,
+    transform,
+    parents,
   });
 
   return dimension;
